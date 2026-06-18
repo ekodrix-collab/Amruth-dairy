@@ -106,16 +106,16 @@ export function Navbar() {
           </nav>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
             {/* Cart Icon */}
-            <div className="relative cursor-pointer group">
+            <div className="relative cursor-pointer group mr-2">
               <ShoppingCart size={20} className="text-[#0f2e5c]/80 group-hover:text-[#0066cc] transition-colors" />
               <span className="absolute -top-1.5 -right-1.5 bg-[#0066cc] text-white text-[9px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-sm">
                 0
               </span>
             </div>
 
-            {/* Login button (Elegant 3D Rounded Bubble style matching requests) */}
+            {/* Login button (Outline) */}
             <Link
               href="/login"
               style={{
@@ -123,13 +123,37 @@ export function Navbar() {
                 alignItems: 'center',
                 gap: '8px',
                 height: '40px',
-                padding: '0 24px',
-                borderRadius: '12px', // Match 12px rounded style
+                padding: '0 20px',
+                borderRadius: '12px',
+                background: 'transparent',
+                color: '#0f2e5c',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                border: '1.5px solid #ECD8B0',
+                transition: 'all 0.2s'
+              }}
+              className="hover:bg-slate-50/50 hover:border-[#0f2e5c]/45"
+            >
+              <User size={14} className="text-[#0f2e5c]" />
+              <span>Login</span>
+            </Link>
+
+            {/* Sign Up button (Elegant 3D Rounded Bubble style matching requests) */}
+            <Link
+              href="/login?mode=signup"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                height: '40px',
+                padding: '0 20px',
+                borderRadius: '12px',
                 background: 'linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%)',
                 color: '#fff',
-                fontWeight: 500, // Medium weight
+                fontWeight: 600,
                 fontSize: '0.9rem',
-                textTransform: 'none', // Title case
+                textTransform: 'none',
                 textDecoration: 'none',
                 boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 12px rgba(29, 78, 216, 0.15)',
                 border: '1px solid rgba(29, 78, 216, 0.15)',
@@ -137,8 +161,7 @@ export function Navbar() {
               }}
               className="hover:scale-105 hover:shadow-md"
             >
-              <User size={14} className="text-white" />
-              <span>Login</span>
+              <span>Sign Up</span>
             </Link>
           </div>
 
@@ -171,7 +194,7 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             <Link
               href="/login"
               onClick={() => setMenuOpen(false)}
@@ -180,19 +203,39 @@ export function Navbar() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                height: '46px',
+                height: '44px',
+                borderRadius: '12px',
+                background: 'transparent',
+                color: '#0f2e5c',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                border: '1.5px solid #ECD8B0'
+              }}
+            >
+              <User size={16} />
+              Login
+            </Link>
+            <Link
+              href="/login?mode=signup"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                height: '44px',
                 borderRadius: '12px',
                 background: 'linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%)',
                 color: '#fff',
-                fontWeight: 500,
+                fontWeight: 600,
                 fontSize: '0.95rem',
                 textDecoration: 'none',
                 boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 14px rgba(29, 78, 216, 0.2)',
                 border: '1px solid rgba(29, 78, 216, 0.15)'
               }}
             >
-              <User size={16} />
-              Login
+              Sign Up
             </Link>
           </div>
         </div>

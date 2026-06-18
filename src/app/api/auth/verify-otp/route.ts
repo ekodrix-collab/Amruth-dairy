@@ -30,9 +30,11 @@ export async function POST(request: Request) {
 
       // Look up or create user in auth.users
       const { data: listData } = await adminClient.auth.admin.listUsers();
-      let devUser = listData?.users?.find(
-        (u) => u.phone === finalPhone || u.phone === cleanPhone
-      );
+      const targetPhoneClean10 = finalPhone.replace(/\D/g, '').slice(-10);
+      let devUser = listData?.users?.find((u) => {
+        if (!u.phone) return false;
+        return u.phone.replace(/\D/g, '').slice(-10) === targetPhoneClean10;
+      });
 
       if (!devUser) {
         // Create user for this phone
@@ -47,24 +49,60 @@ export async function POST(request: Request) {
         devUser = created.user;
       }
 
+      // Ensure user has password set in auth
+      const { error: updateErr } = await adminClient.auth.admin.updateUserById(
+        devUser.id,
+        { password: 'password123' }
+      );
+      if (updateErr) {
+        console.error('[DEV] Failed to set password:', updateErr.message);
+      }
+
+      // Sign in on standard client to set cookies/session
+      const supabase = await createClient();
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        phone: devUser.phone || finalPhone,
+        password: 'password123'
+      });
+
+      if (signInErr) {
+        console.error('[DEV] Failed to sign in via password:', signInErr.message);
+        return NextResponse.json({ success: false, message: 'Dev sign-in failed' }, { status: 500 });
+      }
+
       // Ensure profile exists
-      const { data: existingProfile } = await adminClient
+      let { data: existingProfile } = await adminClient
         .from('profiles')
-        .select('id, role')
+        .select('*')
         .eq('id', devUser.id)
         .maybeSingle();
 
       if (!existingProfile) {
-        await adminClient.from('profiles').insert({
-          id: devUser.id,
-          phone: finalPhone,
-          full_name: 'Dev User',
-          role: 'customer',
-        });
+        const { data: newProfile, error: insertError } = await adminClient
+          .from('profiles')
+          .insert({
+            id: devUser.id,
+            phone: finalPhone,
+            full_name: 'Dev User',
+            role: 'customer',
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('[DEV] Profile creation error:', insertError.message);
+        } else {
+          existingProfile = newProfile;
+        }
       }
 
       const role = existingProfile?.role || 'customer';
-      return NextResponse.json({ success: true, role, profile: existingProfile });
+      return NextResponse.json({ 
+        success: true, 
+        session: signInData.session,
+        profile: existingProfile,
+        role 
+      });
     }
     // ─────────────────────────────────────────────────────────────────
 

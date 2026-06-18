@@ -15,6 +15,7 @@ type Step = 'phone' | 'otp' | 'success'
 
 export default function LoginPage() {
   const [step, setStep] = useState<Step>('phone')
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
@@ -30,6 +31,12 @@ export default function LoginPage() {
     if (hour < 12) setGreeting('Good Morning! 🌅')
     else if (hour < 17) setGreeting('Good Afternoon! ☀️')
     else setGreeting('Good Evening! 🌙')
+
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('mode') === 'signup') {
+      setAuthMode('signup')
+    }
+
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [])
 
@@ -251,14 +258,40 @@ export default function LoginPage() {
                 exit={{ opacity: 0, x: 16 }}
                 transition={{ duration: 0.22 }}
               >
+                {/* Tab Switcher */}
+                <div className="auth-tabs">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('login'); setError(''); }}
+                    className={cn('auth-tab', authMode === 'login' && 'auth-tab-active')}
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode('signup'); setError(''); }}
+                    className={cn('auth-tab', authMode === 'signup' && 'auth-tab-active')}
+                  >
+                    Create Account
+                  </button>
+                </div>
+
                 <div className="form-header">
-                  <h2 className="form-title">{greeting}</h2>
-                  <p className="form-subtitle">Login to continue your healthy journey with us.</p>
+                  <h2 className="form-title">
+                    {authMode === 'login' ? greeting : 'Join Amruth Milk! 🥛'}
+                  </h2>
+                  <p className="form-subtitle">
+                    {authMode === 'login'
+                      ? 'Login to continue your healthy journey with us.'
+                      : 'Create an account to start your fresh milk subscription.'}
+                  </p>
                 </div>
 
                 <form onSubmit={handlePhoneSubmit} className="form-body">
                   <div className="field-group">
-                    <label className="field-label">REGISTERED MOBILE NUMBER</label>
+                    <label className="field-label">
+                      {authMode === 'login' ? 'REGISTERED MOBILE NUMBER' : 'MOBILE NUMBER'}
+                    </label>
                     <div className={cn('phone-input-wrap', error && 'phone-input-error')}>
                       <span className="phone-prefix">
                         <Phone size={13} />
@@ -314,8 +347,31 @@ export default function LoginPage() {
                 </div>
 
                 <p className="form-footer-text">
-                  New to Amruth Milk?{' '}
-                  <Link href="/subscribe" className="form-link">Subscribe Now</Link> or enter your mobile number above to sign up instantly.
+                  {authMode === 'login' ? (
+                    <>
+                      New to Amruth Milk?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('signup')}
+                        className="form-link bg-transparent border-none p-0 cursor-pointer font-bold text-blue-600 hover:underline"
+                        style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                      >
+                        Create an Account
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setAuthMode('login')}
+                        className="form-link bg-transparent border-none p-0 cursor-pointer font-bold text-blue-600 hover:underline"
+                        style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                      >
+                        Sign In Here
+                      </button>
+                    </>
+                  )}
                 </p>
               </motion.div>
             )}
