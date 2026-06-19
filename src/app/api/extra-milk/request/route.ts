@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/utils/supabase/admin';
+import { fetchPricePerLitre, calculateExtraMilkCharge } from '@/lib/billing';
 
-const adminSupabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const adminSupabase = createAdminClient();
 
 export async function POST(request: Request) {
   try {
@@ -69,8 +67,9 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    // Calculate
-    const charge_amount = Math.round((subscription.daily_rate * (extra_litres / subscription.quantity_litres)) * 100) / 100;
+    // Calculate using admin-managed pricing
+    const pricePerLitre = await fetchPricePerLitre(adminSupabase);
+    const charge_amount = calculateExtraMilkCharge(extra_litres, pricePerLitre);
 
     const chargeDateObj = new Date(order_date);
     chargeDateObj.setMonth(chargeDateObj.getMonth() + 1);
