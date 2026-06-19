@@ -26,9 +26,9 @@ The Amruth Dairy platform uses a passwordless **Phone Number + OTP** authenticat
 
 ---
 
-## 3. How to Create the First Admin
+## 3. How to Configure the Admin Account
 
-Because the system automatically creates all new users as `customer` by default, **you must manually upgrade your first account to an admin using the database**.
+Since the application is designed to have **only one admin**, and the system automatically creates all new users as `customer` by default, you must manually upgrade your chosen admin phone number using the database.
 
 **Step-by-step Setup:**
 1. Go to the `/login` page and log in normally using your personal mobile number (e.g., `9876543210`).
@@ -61,9 +61,9 @@ Once your profile role is updated in the database:
 
 ### Local Development Bypass
 If you are running the app locally (`npm run dev`), the `verify-otp` API is configured to bypass real SMS delivery to save costs and speed up testing.
-- Enter **any 10-digit mobile number**.
+- Enter **any 10-digit mobile number** (e.g., your admin number or a test customer number).
 - When prompted for the OTP, enter the universal dev code: **`123456`**.
-- You will be instantly logged in.
+- The system will fetch your existing profile. If you entered your designated admin phone number, it will recognize your `admin` role and redirect you to `/admin`. If you entered a new/customer number, it will route you to onboarding/dashboard.
 
 ### Production Environment
 In production, the `123456` bypass is strictly disabled. To create test users:
