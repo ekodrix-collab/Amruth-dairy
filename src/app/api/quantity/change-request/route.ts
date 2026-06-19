@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/admin';
+import { fetchPricePerLitre, calculateDailyRate, calculateMonthlyAmount } from '@/lib/billing';
+
+const adminSupabase = createAdminClient();
 
 export async function POST(request: Request) {
   try {
@@ -37,15 +41,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'New quantity is the same as current quantity' }, { status: 400 });
     }
 
-    // 6. Calculate new pricing
-    const new_monthly_amount = Math.round(2480.00 * new_quantity * 100) / 100;
-    const new_daily_rate = Math.round((new_monthly_amount / 30.0) * 10000) / 10000;
+    // 6. Calculate new pricing using admin-managed price
+    const pricePerLitre = await fetchPricePerLitre(adminSupabase);
+    const new_daily_rate = calculateDailyRate(pricePerLitre, new_quantity);
 
-    // 7. effective_month = first day of NEXT month
+    // 7. effective_month = first day of NEXT month (quantity changes NEVER apply to current month)
     const effectiveDateObj = new Date();
     effectiveDateObj.setMonth(effectiveDateObj.getMonth() + 1);
     effectiveDateObj.setDate(1);
     const effective_month = effectiveDateObj.toISOString().split('T')[0];
+    const effectiveYear = effectiveDateObj.getFullYear();
+    const effectiveMonth = effectiveDateObj.getMonth() + 1;
+    const new_monthly_amount = calculateMonthlyAmount(new_daily_rate, effectiveYear, effectiveMonth);
 
     // 8. Check capacity for next month if quantity increasing
     if (new_quantity > subscription.quantity_litres) {
@@ -54,8 +61,8 @@ export async function POST(request: Request) {
       // For MVP, we assume we can handle it or we log it. We will proceed.
     }
 
-    // 9. INSERT quantity_changes
-    const { error: insertError } = await supabase
+    // 9. INSERT quantity_changes (using adminClient — RLS requires it)
+    const { error: insertError } = await adminSupabase
       .from('quantity_changes')
       .insert({
         subscription_id: subscription.id,
@@ -73,8 +80,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Failed to request quantity change' }, { status: 500 });
     }
 
-    // 10. UPDATE subscriptions.next_month_quantity
-    await supabase
+    // 10. UPDATE subscriptions.next_month_quantity (using adminClient)
+    await adminSupabase
       .from('subscriptions')
       .update({ next_month_quantity: new_quantity })
       .eq('id', subscription.id);

@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { createAdminClient } from '@/utils/supabase/admin';
+
+const adminSupabase = createAdminClient();
 
 export async function POST(request: Request) {
   try {
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
 
     // Insert vacation
     // Triggers will auto-calculate total_days, total_credit, resume_date, credit_month
-    const { data: vacation, error: insertError } = await supabase
+    const { data: vacation, error: insertError } = await adminSupabase
       .from('vacation_pauses')
       .insert({
         subscription_id: subscription.id,
@@ -89,7 +92,7 @@ export async function POST(request: Request) {
       monthDaysMap[monthStr] = (monthDaysMap[monthStr] || 0) + 1;
 
       // Update capacity for dateStr
-      const { data: capacity } = await supabase
+      const { data: capacity } = await adminSupabase
         .from('daily_capacity')
         .select('*')
         .eq('date', dateStr)
@@ -97,7 +100,7 @@ export async function POST(request: Request) {
 
       if (capacity) {
         const newBooked = Math.max(0, Number(capacity.booked_litres) - Number(subscription.quantity_litres));
-        await supabase
+        await adminSupabase
           .from('daily_capacity')
           .update({
             booked_litres: newBooked,
@@ -114,7 +117,7 @@ export async function POST(request: Request) {
       const creditAmount = Number(pausedDays) * Number(subscription.daily_rate);
       const daysInMonth = new Date(new Date(monthStr).getFullYear(), new Date(monthStr).getMonth() + 1, 0).getDate();
 
-      const { data: bMonth } = await supabase
+      const { data: bMonth } = await adminSupabase
         .from('billing_months')
         .select('*')
         .eq('subscription_id', subscription.id)
@@ -122,7 +125,7 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (bMonth) {
-        await supabase
+        await adminSupabase
           .from('billing_months')
           .update({
             pause_credit: Number(bMonth.pause_credit) + creditAmount,
@@ -131,7 +134,7 @@ export async function POST(request: Request) {
           })
           .eq('id', bMonth.id);
       } else {
-        await supabase
+        await adminSupabase
           .from('billing_months')
           .insert({
             subscription_id: subscription.id,
@@ -149,7 +152,7 @@ export async function POST(request: Request) {
     }
 
     // Update runsheet for existing future records
-    await supabase
+    await adminSupabase
       .from('daily_delivery_sheet')
       .update({ is_vacation: true, delivery_status: 'paused', total_litres: 0, vacation_id: vacation.id })
       .eq('subscription_id', subscription.id)
