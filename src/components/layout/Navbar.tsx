@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { Menu, X, ShoppingCart, User, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const navLinks = [
   { href: '#home', label: 'Home' },
@@ -159,6 +160,7 @@ export function Navbar() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
             {/* Cart Icon */}
             <div 
               onClick={() => window.dispatchEvent(new CustomEvent('open-cart'))}
@@ -307,102 +309,110 @@ export function Navbar() {
               )
             })}
           </nav>
-          <div className="flex flex-col gap-3">
-            {user ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'transparent',
-                    color: '#0f2e5c',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    textDecoration: 'none',
-                    border: '1.5px solid #ECD8B0'
-                  }}
-                >
-                  <User size={16} />
-                  Dashboard
-                </Link>
-                <button
-                  onClick={() => {
-                    handleLogout()
-                    setMenuOpen(false)
-                  }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(to bottom, #ef4444 0%, #dc2626 100%)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    textDecoration: 'none',
-                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 14px rgba(220, 38, 38, 0.2)',
-                    border: '1px solid rgba(220, 38, 38, 0.15)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'transparent',
-                    color: '#0f2e5c',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    textDecoration: 'none',
-                    border: '1.5px solid #ECD8B0'
-                  }}
-                >
-                  <User size={16} />
-                  Login
-                </Link>
-                <Link
-                  href="/login?mode=signup"
-                  onClick={() => setMenuOpen(false)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    height: '44px',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%)',
-                    color: '#fff',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    textDecoration: 'none',
-                    boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 14px rgba(29, 78, 216, 0.2)',
-                    border: '1px solid rgba(29, 78, 216, 0.15)'
-                  }}
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+          
+          <div className="p-4 border-t border-border mt-auto flex flex-col gap-4">
+            <div className="flex justify-between items-center px-2">
+              <span className="text-sm font-semibold text-brown-600">Theme</span>
+              <ThemeToggle />
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              {user ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: 'transparent',
+                      color: '#0f2e5c',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      border: '1.5px solid #ECD8B0'
+                    }}
+                  >
+                    <User size={16} />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout()
+                      setMenuOpen(false)
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(to bottom, #ef4444 0%, #dc2626 100%)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 14px rgba(220, 38, 38, 0.2)',
+                      border: '1px solid rgba(220, 38, 38, 0.15)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: 'transparent',
+                      color: '#0f2e5c',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      border: '1.5px solid #ECD8B0'
+                    }}
+                  >
+                    <User size={16} />
+                    Login
+                  </Link>
+                  <Link
+                    href="/login?mode=signup"
+                    onClick={() => setMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      height: '44px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(to bottom, #3b82f6 0%, #1d4ed8 100%)',
+                      color: '#fff',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.15), 0 4px 14px rgba(29, 78, 216, 0.2)',
+                      border: '1px solid rgba(29, 78, 216, 0.15)'
+                    }}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
