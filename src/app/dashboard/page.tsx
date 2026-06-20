@@ -113,7 +113,7 @@ export default function CustomerDashboard() {
     const formattedStartDate = new Date(wl.requested_start_date).toLocaleDateString('en-IN', {
       day: 'numeric', month: 'long', year: 'numeric'
     })
-    
+
     return (
       <div className="max-w-xl mx-auto space-y-6">
         <div>
@@ -126,7 +126,7 @@ export default function CustomerDashboard() {
         {/* Waitlist Position Card */}
         <div className="rounded-[28px] p-6 sm:p-8 text-white relative overflow-hidden shadow-[0_16px_40px_rgba(217,119,6,0.12)] border border-amber-500/20 bg-gradient-to-br from-[#78350f] to-[#b45309]">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.03] rounded-full blur-3xl pointer-events-none" />
-          
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
             <div>
               <span className="inline-flex items-center gap-1.5 bg-amber-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-amber-200 mb-4 border border-amber-400/20 backdrop-blur-md">
@@ -186,14 +186,13 @@ export default function CustomerDashboard() {
   }
 
   if (!data.subscription) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/onboarding';
+    }
     return (
-      <div className="max-w-md mx-auto text-center py-12 bg-warm-white border border-border/80 rounded-3xl p-8 shadow-shadow shadow-md">
-        <AlertTriangle className="text-amber-500 mx-auto mb-4" size={40} />
-        <h3 className="text-lg font-black text-brown-800">Subscription Missing</h3>
-        <p className="text-xs font-semibold text-brown-600 mt-2 mb-6">You don&apos;t have an active milk subscription yet.</p>
-        <Link href="/onboarding" className="inline-flex items-center justify-center px-6 h-11 bg-amber-400 text-brown-800 font-extrabold rounded-xl text-xs shadow-sm hover:bg-amber-500 transition-all border-none">
-          Complete Onboarding
-        </Link>
+      <div className="max-w-md mx-auto text-center py-12 bg-warm-white border border-border/80 rounded-3xl p-8 shadow-shadow shadow-md animate-pulse">
+        <h3 className="text-lg font-black text-brown-800">Redirecting to Onboarding...</h3>
+        <p className="text-xs font-semibold text-brown-600 mt-2">Setting up your profile.</p>
       </div>
     )
   }
@@ -210,13 +209,13 @@ export default function CustomerDashboard() {
 
   // Determine balance text (positive = credit, negative = due)
   const balanceVal = subscription.balance || 0
-  const balanceText = balanceVal >= 0 
-    ? `₹${balanceVal.toFixed(2)} Credit` 
+  const balanceText = balanceVal >= 0
+    ? `₹${balanceVal.toFixed(2)} Credit`
     : `₹${Math.abs(balanceVal).toFixed(2)} Due`
 
   return (
     <div className="max-w-4xl space-y-8">
-      
+
       {/* Welcome Greeting Row */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -232,11 +231,11 @@ export default function CustomerDashboard() {
 
       {/* Subscription Card - Creamy Deep Green visual */}
       <div className="rounded-[28px] p-6 sm:p-8 text-white relative overflow-hidden shadow-[0_16px_40px_rgba(26,58,42,0.18)] border border-white/5 bg-gradient-to-br from-[#1a3a2a] to-[#27533f]">
-        
+
         {/* Soft Background floating milk drops */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/[0.04] rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-amber-400/[0.04] rounded-full blur-2xl pointer-events-none" />
-        
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-cream-100 mb-4 border border-white/10 backdrop-blur-md">
@@ -289,7 +288,7 @@ export default function CustomerDashboard() {
       <div className="space-y-3">
         <h3 className="text-xs font-black text-brown-600 uppercase tracking-widest pl-1">Quick Actions</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          
+
           <Link href="/dashboard/skip" className="bg-warm-white border border-border/80 p-5 rounded-2xl shadow-shadow shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group flex flex-col justify-between h-32">
             <div className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
               <SkipForward size={20} />
@@ -335,7 +334,7 @@ export default function CustomerDashboard() {
 
       {/* Two Column details row */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-        
+
         {/* Left Column - Live Bill Calculator (3/5) */}
         <div className="md:col-span-3 space-y-3">
           <h3 className="text-xs font-black text-brown-600 uppercase tracking-widest pl-1">Live Billing Calculator</h3>
