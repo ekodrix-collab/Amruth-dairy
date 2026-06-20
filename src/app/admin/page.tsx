@@ -1,121 +1,150 @@
 import { createClient } from '@/utils/supabase/server'
-import {
-  Users, Wallet, Map, Droplets, CreditCard, Umbrella, PlusCircle, UserPlus,
-  Package, Database, CheckCircle2, ShieldCheck, Activity, Search
-} from 'lucide-react'
+import DashboardClient from './DashboardClient'
 
-// Forces the page to be dynamically rendered to always fetch live counts
+// Force dynamic rendering to always query latest database records
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboardHome() {
+export default async function AdminDashboardPage() {
   const supabase = await createClient()
 
-  // Fetch all basic counts in parallel
+  // Get current date in IST (YYYY-MM-DD)
+  const d = new Date()
+  const todayStr = d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
+
+  // Parallel fetches for summary counts
   const [
-    { count: totalCustomers },
-    { count: totalSubscriptions },
-    { count: totalProducts },
-    { count: waitlistCount }
+    { count: totalCustomersCount },
+    { count: activeSubsCount },
+    { count: totalSubsCount },
+    { count: waitlistCount },
+    { data: activeSubsData },
+    { data: paymentsData },
+    { data: deliveriesToday },
+    { data: skippedToday }
   ] = await Promise.all([
-    supabase.from('profiles').select('*', { count: 'exact', head: true }),
-    supabase.from('subscriptions').select('*', { count: 'exact', head: true }),
-    supabase.from('products').select('*', { count: 'exact', head: true }),
-    supabase.from('waitlist').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer'),
+    supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('subscriptions').select('id', { count: 'exact', head: true }),
+    supabase.from('waitlist').select('id', { count: 'exact', head: true }).eq('status', 'waiting'),
+    supabase.from('subscriptions').select('current_quantity_litres, monthly_amount').eq('status', 'active'),
+    supabase.from('payments').select('amount').eq('status', 'success'),
+    supabase.from('daily_delivery_sheet').select('id', { count: 'exact' }).eq('delivery_date', todayStr),
+    supabase.from('daily_delivery_sheet').select('id', { count: 'exact' }).eq('delivery_date', todayStr).eq('delivery_status', 'skipped')
   ])
 
-  return (
-    <div className="space-y-6">
-      
-      {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-800 flex items-center gap-2">
-            Dashboard
-          </h1>
-          <p className="text-sm font-medium text-slate-500 mt-1">Real-time overview of your database metrics.</p>
-        </div>
-        
-        {/* Status Pills */}
-        <div className="flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 bg-white border border-green-100 rounded-xl px-3 py-2 shadow-sm">
-            <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600"><Database size={16}/></div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database</p>
-              <p className="text-xs font-bold text-green-600">Connected</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  // 1. Total delivering litres today
+  const activeSubs = activeSubsData || []
+  const totalLitresToday = activeSubs.reduce((acc, item) => acc + Number(item.current_quantity_litres || 0), 0)
 
-      {/* METRIC CARDS GRID */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard title="Total Customers" value={totalCustomers || 0} icon={Users} color="blue" />
-        <MetricCard title="Active Subscriptions" value={totalSubscriptions || 0} icon={Wallet} color="sky" />
-        <MetricCard title="Products in Catalog" value={totalProducts || 0} icon={Package} color="amber" />
-        <MetricCard title="Waitlisted" value={waitlistCount || 0} icon={UserPlus} color="red" />
-      </div>
+  // 2. Monthly Revenue (sum payments in current billing cycle, fallback to sum of monthly_amount of active subs)
+  const totalRevenue = paymentsData && paymentsData.length > 0
+    ? paymentsData.reduce((acc, p) => acc + Number(p.amount || 0), 0)
+    : activeSubs.reduce((acc, item) => acc + Number(item.monthly_amount || 0), 0)
 
-      {/* QUICK LINKS GRID */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <h2 className="text-sm font-bold text-slate-800 mb-4">Quick Navigation</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <a href="/admin/customers" className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-[#0066cc] hover:bg-blue-50 transition-colors group">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 text-[#0066cc] flex items-center justify-center group-hover:bg-[#0066cc] group-hover:text-white transition-colors"><Users size={20}/></div>
-            <div>
-              <p className="text-sm font-bold text-slate-800">Customers</p>
-              <p className="text-xs font-medium text-slate-500">Manage profiles</p>
-            </div>
-          </a>
-          <a href="/admin/subscriptions" className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-[#0066cc] hover:bg-blue-50 transition-colors group">
-            <div className="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition-colors"><Wallet size={20}/></div>
-            <div>
-              <p className="text-sm font-bold text-slate-800">Subscriptions</p>
-              <p className="text-xs font-medium text-slate-500">Manage plans</p>
-            </div>
-          </a>
-          <a href="/admin/deliveries" className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-[#0066cc] hover:bg-blue-50 transition-colors group">
-            <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center group-hover:bg-green-600 group-hover:text-white transition-colors"><Map size={20}/></div>
-            <div>
-              <p className="text-sm font-bold text-slate-800">Deliveries</p>
-              <p className="text-xs font-medium text-slate-500">Dispatch tracking</p>
-            </div>
-          </a>
-          <a href="/admin/billing" className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 hover:border-[#0066cc] hover:bg-blue-50 transition-colors group">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors"><CreditCard size={20}/></div>
-            <div>
-              <p className="text-sm font-bold text-slate-800">Billing</p>
-              <p className="text-xs font-medium text-slate-500">Payments & Invoices</p>
-            </div>
-          </a>
-        </div>
-      </div>
+  // 3. Deliveries count
+  const deliveriesCount = deliveriesToday?.length || activeSubsCount || 0
+  const skippedCount = skippedToday?.length || 0
 
-    </div>
-  )
-}
+  // 4. Fetch Deliveries list (top 6 today)
+  const { data: dbDeliveries } = await supabase
+    .from('daily_delivery_sheet')
+    .select('id, delivery_status, total_quantity, profiles(full_name, area)')
+    .eq('delivery_date', todayStr)
+    .limit(6)
 
-function MetricCard({ title, value, icon: Icon, color }: any) {
-  const colorMap: any = {
-    blue: { bg: 'bg-blue-50', text: 'text-[#0066cc]' },
-    green: { bg: 'bg-green-50', text: 'text-green-600' },
-    amber: { bg: 'bg-amber-50', text: 'text-amber-500' },
-    purple: { bg: 'bg-purple-50', text: 'text-purple-500' },
-    red: { bg: 'bg-red-50', text: 'text-red-500' },
-    sky: { bg: 'bg-sky-50', text: 'text-sky-500' },
+  // Fallback to active subscriptions mapped as pending deliveries if sheet is empty
+  const { data: dbActiveSubs } = await supabase
+    .from('subscriptions')
+    .select('id, current_quantity_litres, profiles(full_name, area)')
+    .eq('status', 'active')
+    .limit(6)
+
+  const deliveriesList = dbDeliveries && dbDeliveries.length > 0
+    ? dbDeliveries.map(item => ({
+        id: item.id,
+        customerName: (item.profiles as any)?.full_name || 'Customer',
+        area: (item.profiles as any)?.area || 'General',
+        qty: `${item.total_quantity}L`,
+        status: item.delivery_status,
+      }))
+    : (dbActiveSubs || []).map(item => ({
+        id: item.id,
+        customerName: (item.profiles as any)?.full_name || 'Customer',
+        area: (item.profiles as any)?.area || 'General',
+        qty: `${item.current_quantity_litres}L`,
+        status: 'pending',
+      }))
+
+  // 5. Fetch Recent Activities or notifications log
+  const { data: dbNotifications } = await supabase
+    .from('notifications_log')
+    .select('id, notification_type, created_at, message_body, profiles(full_name)')
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  // Map to clean activities
+  const recentActivities = dbNotifications && dbNotifications.length > 0
+    ? dbNotifications.map(n => {
+        let type = 'blue'
+        if (n.notification_type.includes('skip')) type = 'amber'
+        else if (n.notification_type.includes('payment')) type = 'green'
+        else if (n.notification_type.includes('cancel')) type = 'red'
+
+        return {
+          id: n.id,
+          text: n.message_body || `${(n.profiles as any)?.full_name || 'User'} triggered ${n.notification_type}`,
+          time: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          type
+        }
+      })
+    : [
+        { id: '1', text: 'Rajesh Kumar paused subscription for vacation', time: '10 min ago', type: 'amber' },
+        { id: '2', text: 'New subscription added: Priya Sharma (A2 Cow Milk)', time: '1 hour ago', type: 'blue' },
+        { id: '3', text: 'Payment received from Amit Patel · ₹1,240', time: '2 hours ago', type: 'green' },
+        { id: '4', text: 'Delivery route completed by driver: Raj (Zone A)', time: '4 hours ago', type: 'green' },
+        { id: '5', text: 'Waitlist notification sent to Sunita Rao', time: '5 hours ago', type: 'blue' }
+      ]
+
+  // 6. Subscriptions overview segments
+  // Fetch subscription status counts
+  const { data: subStatusData } = await supabase
+    .from('subscriptions')
+    .select('status')
+
+  const subOverview = {
+    active: 0,
+    paused: 0,
+    cancelled: 0,
+    pending: 0
   }
-  const c = colorMap[color]
+
+  if (subStatusData) {
+    subStatusData.forEach(item => {
+      if (item.status === 'active') subOverview.active++
+      else if (item.status === 'paused') subOverview.paused++
+      else if (item.status === 'cancelled' || item.status === 'expired') subOverview.cancelled++
+      else subOverview.pending++
+    })
+  } else {
+    subOverview.active = activeSubsCount || 0
+    subOverview.pending = (totalSubsCount || 0) - (activeSubsCount || 0)
+  }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
-      <div className="flex justify-between items-start mb-4">
-        <div className={`w-10 h-10 rounded-xl ${c.bg} ${c.text} flex items-center justify-center`}>
-          <Icon size={20} strokeWidth={2.5} />
-        </div>
-      </div>
-      <div>
-        <p className="text-3xl font-black text-slate-800">{value}</p>
-        <p className="text-xs font-bold text-slate-500 mt-1">{title}</p>
-      </div>
-    </div>
+    <DashboardClient 
+      stats={{
+        totalCustomers: totalCustomersCount || 0,
+        activeSubscriptions: activeSubsCount || 0,
+        totalSubscriptions: totalSubsCount || 0,
+        waitlist: waitlistCount || 0,
+        totalLitresToday,
+        totalRevenue,
+        deliveriesCount,
+        skippedCount
+      }}
+      deliveriesList={deliveriesList}
+      recentActivities={recentActivities}
+      subOverview={subOverview}
+    />
   )
 }

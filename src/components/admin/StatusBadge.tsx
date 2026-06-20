@@ -1,3 +1,5 @@
+'use client'
+
 type StatusType = 
   | 'success' // Active, Completed, Paid, Delivered
   | 'warning' // Pending, Low Stock, Due
@@ -11,7 +13,6 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, type = 'default' }: StatusBadgeProps) {
-  
   // Auto-map common statuses if type isn't explicitly provided
   let determinedType = type;
   if (type === 'default') {
@@ -23,15 +24,28 @@ export function StatusBadge({ status, type = 'default' }: StatusBadgeProps) {
   }
 
   const styles = {
-    success: 'bg-green-50 text-green-600 border border-green-100',
-    warning: 'bg-amber-50 text-amber-600 border border-amber-100',
-    danger: 'bg-red-50 text-red-600 border border-red-100',
-    info: 'bg-blue-50 text-[#0066cc] border border-blue-100',
-    default: 'bg-slate-50 text-slate-600 border border-slate-200',
+    success: { bg: '#dcfce7', text: '#16a34a', border: '#bbf7d0' },
+    warning: { bg: '#fef3c7', text: '#d97706', border: '#fde68a' },
+    danger:  { bg: '#fee2e2', text: '#dc2626', border: '#fecaca' },
+    info:    { bg: '#dbeafe', text: '#2563eb', border: '#bfdbfe' },
+    default: { bg: '#f1f5f9', text: '#64748b', border: '#e2e8f0' },
   };
 
+  const currentStyle = styles[determinedType];
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${styles[determinedType]}`}>
+    <span 
+      className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-[0.5px]"
+      style={{
+        background: currentStyle.bg,
+        color: currentStyle.text,
+        border: `1.5px solid ${currentStyle.border}`
+      }}
+    >
+      <span 
+        className="w-1.5 h-1.5 rounded-full mr-1.5 inline-block"
+        style={{ background: currentStyle.text }}
+      />
       {status}
     </span>
   );
