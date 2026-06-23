@@ -48,6 +48,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: 'Active subscription not found' }, { status: 400 });
     }
 
+    // CHECK IF ALREADY REQUESTED
+    const { data: existingOrder } = await adminSupabase
+      .from('extra_milk_orders')
+      .select('id')
+      .eq('subscription_id', subscription.id)
+      .eq('order_date', order_date)
+      .maybeSingle();
+
+    if (existingOrder) {
+      return NextResponse.json({ success: false, message: 'You have already requested extra milk for this date.' }, { status: 400 });
+    }
+
     // CAPACITY BOOKING
     const { data: bookingSuccess, error: capacityError } = await adminSupabase.rpc('book_capacity_single_day', {
       p_date: order_date,
@@ -96,8 +108,11 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      console.error('Extra milk request error:', insertError.message);
-      return NextResponse.json({ success: false, message: 'Failed to request extra milk' }, { status: 500 });
+      console.error('Extra milk request error:', insertError.message, insertError.code);
+      if (insertError.code === '23505') {
+        return NextResponse.json({ success: false, message: 'You have already requested extra milk for this date.' }, { status: 400 });
+      }
+      return NextResponse.json({ success: false, message: `DB Error: ${insertError.message}` }, { status: 500 });
     }
 
     // Note: capacity was already safely booked and locked via book_capacity_single_day
